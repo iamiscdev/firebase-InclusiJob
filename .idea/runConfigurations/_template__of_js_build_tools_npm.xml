@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="true" type="js.build_tools.npm" singleton="false">
+    <package-json value="$PROJECT_DIR$/package.json" />
+    <command value="run" />
+    <scripts />
+    <node-interpreter value="$APPLICATION_CONFIG_DIR$/node/versions/22.11.0/node" />
+    <package-manager value="npm" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>
