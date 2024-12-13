@@ -1,13 +1,14 @@
 import 'react-native-gesture-handler';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFonts } from "expo-font";
-import {getAuth, onAuthStateChanged} from 'firebase/auth';
-import {getFirestore, doc, getDoc} from 'firebase/firestore';
-import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-import {HomeScreen, SignInScreen, SignUpScreen} from './src/screens';
+import { NotificationScreen, BookmarkScreen, HomeScreen2, SignInScreen, SignUpScreen } from './src/screens';
+import ForgotForgotScreen from './src/screens/ForgotScreen/ForgotPasswordScreen';
 import LoadScreen from './src/screens/LoadScreen/LoadScreen';
 
 import {decode, encode} from 'base-64';
@@ -54,31 +55,33 @@ export default function App() {
                     } else {
                         setUser(null); // User document doesn't exist
                     }
-                } catch (error) {
-                    console.error('Error fetching user data:', error);
+                } catch (error1) {
+                    console.error('Error fetching user data:', error1);
                 }
             } else {
                 setUser(null); // No authenticated user
             }
 
-            const timer = setTimeout(() => {
-                setLoading(false); // Stop loading after user is fetched
-            }, 3000); // 3 seconds duration
-
-            return () => clearTimeout(timer); // Cleanup timer
+            if(fontsLoaded) {
+                const timer = setTimeout(() => {
+                    setLoading(false); // Hide splash screen after fonts are loaded
+                }, 3000); // 3 seconds duration
+    
+                return () => clearTimeout(timer); // Cleanup timer
+            }
         });
 
         // Cleanup subscription on unmount
         return () => unsubscribe();
 
-    }, []);
+    }, [fontsLoaded]);
 
     if (error) {
         return <Text>Error: {error.message}</Text>; // Display error message
     }
 
     if (loading) {
-        return <LoadScreen/>;
+        return <LoadScreen />; // or a loading indicator
     }
 
     function SearchScreen() {
@@ -99,67 +102,126 @@ export default function App() {
 
     return (
         <NavigationContainer>
-            <Stack.Navigator initialRouteName="SignIn" screenOptions={{ headerShown: false }}>
-
+          <Stack.Navigator>
+            {user ? (
+              // If the user is authenticated, show the bottom tabs
+              <>
                 <Stack.Screen
-                    name="Tabs"
-                    options={{headerShown: false}}>
-                    {() => (
-                        <Tab.Navigator
-                            initialRouteName="Home"
-                            screenOptions={({ route }) => ({
-                                tabBarIcon: ({ color, size }) => {
-                                    let source;
-                                    if (route.name === 'Home') {
-                                        source = HomeIcon;
-                                    } else if (route.name === 'Notification') {
-                                        source = BellIcon;
-                                    } else if (route.name === 'Bookmark') {
-                                        source = BookmarkIcon;
-                                    }
-
-                                    return (
-                                        <Image
-                                            source={source}
-                                            style={{
-                                                width: size,
-                                                height: size,
-                                                tintColor: color, // Apply color tint
-                                            }}
-                                            resizeMode="contain"
-                                        />
-                                    );
-                                },
-                                tabBarLabel: () => null, // Disable the label (text)
-                                tabBarActiveTintColor: '#002974', // Customize active tab icon color
-                                tabBarInactiveTintColor: '#A49EB5', // Customize inactive tab icon color
-                            })}
-                        >
-                            <Tab.Screen name="Notification" component={SearchScreen} />
-                            <Tab.Screen name="Home">
-                                {props => <HomeScreen {...props} extraData={user} />}
-                            </Tab.Screen>
-                            <Tab.Screen name="Bookmark" component={ ProfileScreen } />
-                        </Tab.Navigator>
-                    )}
-
+                  name="Tabs"
+                  options={{ headerShown: false }}
+                >
+                  {() => (
+                    <Tab.Navigator
+                      initialRouteName="Home"
+                      screenOptions={({ route }) => ({
+                        tabBarIcon: ({ color, size }) => {
+                          let source;
+                          if (route.name === 'Home') {
+                            source = HomeIcon;
+                          } else if (route.name === 'Notification') {
+                            source = BellIcon;
+                          } else if (route.name === 'Bookmark') {
+                            source = BookmarkIcon;
+                          }
+    
+                          return (
+                            <Image
+                              source={source}
+                              style={{
+                                width: size,
+                                height: size,
+                                tintColor: color, // Apply color tint
+                              }}
+                              resizeMode="contain"
+                            />
+                          );
+                        },
+                        tabBarLabel: () => null, // Disable the label (text)
+                        tabBarSize: 24, // Customize tab icon size
+                        tabBarHideOnKeyboard: true, // Hide tab bar on keyboard
+                        tabBarStyle: {
+                          backgroundColor: '#FFFFFF', // Customize tab bar background color
+                          borderTopColor: '#A49EB5', // Customize border color
+                          borderTopWidth: 1, // Customize border width
+                        },
+                        tabBarActiveTintColor: '#002974', // Customize active tab icon color
+                        tabBarInactiveTintColor: '#A49EB5', // Customize inactive tab icon color
+                      })}
+                    >
+                      <Tab.Screen name="Notification" component={ NotificationScreen } options={{ headerShown: false }} />
+                      <Tab.Screen name="Home" options={{ headerShown: false }}>
+                        {props => <HomeScreen2 {...props} extraData={user} />}
+                      </Tab.Screen>
+                      <Tab.Screen name="Bookmark" component={ BookmarkScreen } options={{ headerShown: false }}/>
+                    </Tab.Navigator>
+                  )}
                 </Stack.Screen>
 
-                <Stack.Screen name="SignIn" component={ SignInScreen } options={{headerShown: false}}/>
-                <Stack.Screen name="SignUp" component={ SignUpScreen } options={{headerShown: false}} />
+                <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="ForgotPassword" component={ForgotForgotScreen} options={{ headerShown: false }} />
+              </>
+            ) : (
+              // If the user is not authenticated, show the login screens
+              <>
+                <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
+                <Stack.Screen name="ForgotPassword" component={ForgotForgotScreen} options={{ headerShown: false }} />
 
-                {user ? (
-                    // If the user is authenticated, show the bottom tabs
-                    <>
-
-                    </>
-
-                ) : (
-                    <>
-
-                    </>
-                )}
-            </Stack.Navigator>
+                <Stack.Screen
+                  name="Tabs"
+                  options={{ headerShown: false }}
+                >
+                  {() => (
+                    <Tab.Navigator
+                      initialRouteName="Home"
+                      screenOptions={({ route }) => ({
+                        tabBarIcon: ({ color, size }) => {
+                          let source;
+                          if (route.name === 'Home') {
+                            source = HomeIcon;
+                          } else if (route.name === 'Notification') {
+                            source = BellIcon;
+                          } else if (route.name === 'Bookmark') {
+                            source = BookmarkIcon;
+                          }
+    
+                          return (
+                            <Image
+                              source={source}
+                              style={{
+                                width: size,
+                                height: size,
+                                tintColor: color, // Apply color tint
+                              }}
+                              resizeMode="contain"
+                            />
+                          );
+                        },
+                        tabBarLabel: () => null, // Disable the label (text)
+                        tabBarSize: 24, // Customize tab icon size
+                        tabBarHideOnKeyboard: true, // Hide tab bar on keyboard
+                        tabBarStyle: {
+                          backgroundColor: '#FFFFFF', // Customize tab bar background color
+                          borderTopColor: '#A49EB5', // Customize border color
+                          borderTopWidth: 1, // Customize border width
+                        },
+                        tabBarActiveTintColor: '#002974', // Customize active tab icon color
+                        tabBarInactiveTintColor: '#A49EB5', // Customize inactive tab icon color
+                      })}
+                    >
+                      <Tab.Screen name="Notification" component={SearchScreen} />
+                      <Tab.Screen name="Home" options={{ headerShown: false }}>
+                        {props => <HomeScreen2 {...props} extraData={user} />}
+                      </Tab.Screen>
+                      <Tab.Screen name="Bookmark" component={ProfileScreen} />
+                    </Tab.Navigator>
+                  )}
+                </Stack.Screen>
+                
+              </>
+            )}
+          </Stack.Navigator>
         </NavigationContainer>
-    );
+      );
 }

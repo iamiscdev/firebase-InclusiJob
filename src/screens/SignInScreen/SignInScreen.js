@@ -18,6 +18,7 @@ export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [errorMessage, setErrorMessage] = useState("");
+    
     const [isLoading, setIsLoading] = useState(false);
 
     const onFooterLinkPress = () => {
@@ -42,7 +43,7 @@ export default function LoginScreen({ navigation }) {
             const userDoc = await getDoc(doc(db, 'users', uid));
 
             if (!userDoc.exists()) {
-                alert("User does not exist anymore.");
+                setErrorMessage("User does not exist anymore."); // alert("User does not exist anymore.");
                 return;
             }
             const userData = userDoc.data();
@@ -52,7 +53,7 @@ export default function LoginScreen({ navigation }) {
                 params: { userData },
             });
         } catch (error) {
-            alert(error.message);
+            setErrorMessage(error.message)// alert(error.message);
         } finally {
             setIsLoading(false);
         }
@@ -72,7 +73,7 @@ export default function LoginScreen({ navigation }) {
                 <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                     <SafeAreaView style={styles.container}>
                         <Image
-                            source={require('../../../assets/images/logo.png')}
+                            source={require('../../../assets/icons/logo.png')}
                             style={styles.image}
                             contentFit="contain"
                         />
@@ -84,8 +85,11 @@ export default function LoginScreen({ navigation }) {
                             <TextInput
                                 style={styles.textInput}
                                 placeholder="Email"
+                                placeholderTextColor="#aaaaaa"
                                 value={email}
                                 onChangeText={text => setEmail(text)}
+                                underlineColorAndroid="transparent"
+                                autoCapitalize="none"
                                 keyboardType="email-address"/>
 
                             <TouchableOpacity onPress={() => {
@@ -100,9 +104,12 @@ export default function LoginScreen({ navigation }) {
                             <TextInput
                                 style={styles.textInput}
                                 placeholder="Password"
+                                placeholderTextColor="#aaaaaa"
                                 value={password}
                                 onChangeText={text => setPassword(text)}
                                 secureTextEntry
+                                underlineColorAndroid="transparent"
+                                autoCapitalize="none"
                             />
 
                             <TouchableOpacity onPress={() => {
@@ -114,8 +121,7 @@ export default function LoginScreen({ navigation }) {
 
                         {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
 
-                        <TouchableOpacity style={{width: "100%"}} onPress={() => {
-                        }}>
+                        <TouchableOpacity style={{width: "100%"}} onPress={() => { navigation.navigate('ForgotPassword') }}>
                             <Text style={styles.forgotPassword}>Forgot Password?</Text>
                         </TouchableOpacity>
 
@@ -134,7 +140,7 @@ export default function LoginScreen({ navigation }) {
 
                         <TouchableOpacity style={styles.googleButton} onPress={() => {}}>
                             <Image
-                                source={require("../../../assets/images/google_logo.png")}
+                                source={require("../../../assets/icons/google-icon.png")}
                                 style={styles.googleIcon}/>
 
                             <Text style={styles.googleButtonText}>CONTINUE WITH GOOGLE</Text>

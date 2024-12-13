@@ -30,11 +30,6 @@ export default StyleSheet.create({
         paddingHorizontal: 20,
     },
 
-    container3: {
-        flexDirection: "row", // Align items horizontally
-        alignItems: "center",
-    },
-
     image: {
         width: 60,
         height: 50,
@@ -64,8 +59,8 @@ export default StyleSheet.create({
         width: 125,
         height: 109,
         position: "fixed",
-        marginTop: 40,
-        marginBottom: 40, // Add some spacing below the logo
+        marginTop: 10,
+        marginBottom: 10, // Add some spacing below the logo
     },
 
     progressBar: {
@@ -83,6 +78,7 @@ export default StyleSheet.create({
         textAlign: 'center',
         top: 10,
         color: '#333',
+        marginTop: 30,
         marginBottom: 10,
     },
 
@@ -133,7 +129,7 @@ export default StyleSheet.create({
         borderRadius: 10,
         borderColor: '#F0F0F0',
         backgroundColor: '#F0F0F0',
-        marginBottom: 15,
+        marginBottom: 50,
         paddingHorizontal: 10,
 
         // Elevation for shadow effect
@@ -274,6 +270,7 @@ export default StyleSheet.create({
         borderRadius: 5,
         borderWidth: 1,
         borderColor: '#E0E0E0',
+        borderElevation: 25,
     },
 
     googleIcon: {
@@ -346,7 +343,7 @@ export default StyleSheet.create({
     signInText: {
         fontSize: 16,
         textAlign: 'center',
-        marginTop: 50, // Add spacing above the sign-up text
+        marginTop: 15, // Add spacing above the sign-up text
         color: '#000',
     },
 
@@ -355,6 +352,12 @@ export default StyleSheet.create({
         color: '#000',
         fontWeight: 'bold',
         textDecorationLine: 'underline',
+    },
+
+    emailHighlight: {
+        fontSize: 16,
+        color: '#000',
+        fontWeight: 'bold',
     },
 
     containerProfie: {
@@ -390,6 +393,5 @@ export default StyleSheet.create({
     error: {
         color: 'red',
         marginTop: 5,
-        marginBottom: 12,
     }
 });

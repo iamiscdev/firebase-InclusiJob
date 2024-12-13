@@ -73,6 +73,10 @@ npm install
 ```bash
 npm start
 ```
+## Run expo tunnel
+```bash
+expo start --tunnel
+```
 
 ## Run Preview apk
 ```bash

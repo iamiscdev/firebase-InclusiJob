@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
 import { Image } from "expo-image";
-import { View, KeyboardAvoidingView, Platform, ScrollView , Text, TextInput, TouchableOpacity, SafeAreaView, FlatList  } from "react-native";
+import { View, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, SafeAreaView, FlatList } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons"; // Using Ionicons for the camera icon
 import { signInWithEmailAndPassword } from "firebase/auth";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-import {auth, db} from "../../firebase/config";
-import {doc, getDoc} from "firebase/firestore";
+import { auth, db } from "../../firebase/config";
+import { doc, setDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import styles from './styles';
 import LoadingModal from "../../utils/LoadingModal";
 
 export default function LoginScreen({ navigation }) {
-    const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [fullName, setFullName] = useState("");
 
     const [phoneNumber, setPhoneNumber] = useState("");
     const [address, setAddress] = useState("");
@@ -45,6 +46,7 @@ export default function LoginScreen({ navigation }) {
     const [showSignupScreenPage2, setShowSignupScreenPage2] = useState(false); // State to toggle views
     const [showSignupScreenPage3, setShowSignupScreenPage3] = useState(false); // State to toggle views
     const [showSignupScreenPage4, setShowSignupScreenPage4] = useState(false); // State to toggle views
+    const [showSignupScreenPage5, setShowSignupScreenPage5] = useState(false); // State to toggle views
 
 
     const previousCreate = () => {
@@ -53,6 +55,7 @@ export default function LoginScreen({ navigation }) {
         setShowSignupScreenPage2(false);
         setShowSignupScreenPage3(false);
         setShowSignupScreenPage4(false);
+        setShowSignupScreenPage5(false);
     }
 
     const previousAdditional = () => {
@@ -61,6 +64,7 @@ export default function LoginScreen({ navigation }) {
         setShowSignupScreenPage2(true);
         setShowSignupScreenPage3(false);
         setShowSignupScreenPage4(false);
+        setShowSignupScreenPage5(false);
     }
 
     const previousSector = () => {
@@ -69,6 +73,16 @@ export default function LoginScreen({ navigation }) {
         setShowSignupScreenPage2(false);
         setShowSignupScreenPage3(true);
         setShowSignupScreenPage4(false);
+        setShowSignupScreenPage5(false);
+    }
+
+    const previousProfile = () => {
+
+        setShowSignupScreenPage1(false);
+        setShowSignupScreenPage2(false);
+        setShowSignupScreenPage3(false);
+        setShowSignupScreenPage4(true);
+        setShowSignupScreenPage5(false);
     }
 
     const continueAdditional = () => {
@@ -84,7 +98,7 @@ export default function LoginScreen({ navigation }) {
         setShowSignupScreenPage2(true);
         setShowSignupScreenPage3(false);
         setShowSignupScreenPage4(false);
-
+        setShowSignupScreenPage5(false);
     }
 
     const continueSector = () => {
@@ -100,6 +114,7 @@ export default function LoginScreen({ navigation }) {
         setShowSignupScreenPage2(false);
         setShowSignupScreenPage3(true);
         setShowSignupScreenPage4(false);
+        setShowSignupScreenPage5(false);
     }
 
     const continueProfile = () => {
@@ -115,41 +130,48 @@ export default function LoginScreen({ navigation }) {
         setShowSignupScreenPage2(false);
         setShowSignupScreenPage3(false);
         setShowSignupScreenPage4(true);
+        setShowSignupScreenPage5(false);
     }
 
     const onFooterLinkPress = () => {
         navigation.navigate('SignIn');
     }
 
-    const onLoginPress = async () => {
+    const continueCreated = async () => {
+        if (!fullName && !email && !birthDate && !selectedSectorValue) {
+            setErrorMessage("All field are required.");
+            return; // Exit the function if fields are empty
+        }
+
+        // Proceed with login or any other action
+        setErrorMessage(""); // Clear error message
+
         setIsLoading(true);
         try {
-
-            if (!email || !password) {
-                setErrorMessage("Email and password are required.");
-                return; // Exit the function if fields are empty
-            }
-
-            // Proceed with login or any other action
-            setErrorMessage(""); // Clear error message
-
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const uid = userCredential.user.uid;
+            const data = {
+                id: uid,
+                email,
+                fullName,
+                birthDate,
+                phoneNumber,
+                address,
+                postalCode,
+                selectedSectorValue,
+            };
 
-            const userDoc = await getDoc(doc(db, 'users', uid));
+            await setDoc(doc(db, 'users', uid), data);
 
-            if (!userDoc.exists()) {
-                alert("User does not exist anymore.");
-                return;
-            }
-            const userData = userDoc.data();
-            await AsyncStorage.setItem('user', JSON.stringify(userData));  // Save user data
-            navigation.navigate('Tabs', {
-                screen: 'Home',
-                params: { userData },
-            });
+            setShowSignupScreenPage1(false);
+            setShowSignupScreenPage2(false);
+            setShowSignupScreenPage3(false);
+            setShowSignupScreenPage4(false);
+            setShowSignupScreenPage5(true);
+
         } catch (error) {
             alert(error.message);
+
         } finally {
             setIsLoading(false);
         }
@@ -165,7 +187,7 @@ export default function LoginScreen({ navigation }) {
                 <LinearGradient
                     style={styles.background}
                     colors={["#FFFFFF", "#E0F3FF"]}
-                    locations={[0, 1]}>
+                    locations={[0.7, 1]}>
 
                     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                         <SafeAreaView style={styles.container2}>
@@ -186,11 +208,11 @@ export default function LoginScreen({ navigation }) {
                                     placeholder="e.g Isaac Rei"
                                     value={fullName}
                                     onChangeText={text => setFullName(text)}
-                                    keyboardType="default"/>
+                                    keyboardType="default" />
 
                                 <TouchableOpacity onPress={() => {
                                 }} style={styles.iconContainer}>
-                                    <Icon name="cancel" size={19} color="#000"/>
+                                    <Icon name="cancel" size={19} color="#000" />
                                 </TouchableOpacity>
 
                             </View>
@@ -202,11 +224,11 @@ export default function LoginScreen({ navigation }) {
                                     placeholder="Email"
                                     value={email}
                                     onChangeText={text => setEmail(text)}
-                                    keyboardType="email-address"/>
+                                    keyboardType="email-address" />
 
                                 <TouchableOpacity onPress={() => {
                                 }} style={styles.iconContainer}>
-                                    <Icon name="cancel" size={19} color="#000"/>
+                                    <Icon name="cancel" size={19} color="#000" />
                                 </TouchableOpacity>
 
                             </View>
@@ -223,7 +245,7 @@ export default function LoginScreen({ navigation }) {
 
                                 <TouchableOpacity onPress={() => {
                                 }} style={styles.iconContainer}>
-                                    <Icon name="visibility" size={19} color="#000"/>
+                                    <Icon name="visibility" size={19} color="#000" />
                                 </TouchableOpacity>
 
                             </View>
@@ -234,8 +256,8 @@ export default function LoginScreen({ navigation }) {
                             <TouchableOpacity onPress={(continueAdditional)}>
                                 <LinearGradient
                                     colors={['#000000', '#1a2a6c']} // Gradient colors (dark to blue)
-                                    start={{x: 0, y: 0}} // Start gradient from the left
-                                    end={{x: 1, y: 0}}   // End gradient at the right
+                                    start={{ x: 0, y: 0 }} // Start gradient from the left
+                                    end={{ x: 1, y: 0 }}   // End gradient at the right
                                     style={styles.signupConButton}>
 
                                     <Text style={styles.signupConButtonText}>CONTINUE</Text>
@@ -243,21 +265,20 @@ export default function LoginScreen({ navigation }) {
                                 </LinearGradient>
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.googleButton} onPress={() => {}}>
+                            <TouchableOpacity style={styles.googleButton} onPress={() => { }}>
                                 <Image
-                                    source={require("../../../assets/images/google_logo.png")}
-                                    style={styles.googleIcon}/>
+                                    source={require("../../../assets/icons/google-icon.png")}
+                                    style={styles.googleIcon} />
 
                                 <Text style={styles.googleButtonText}>CONTINUE WITH GOOGLE</Text>
                             </TouchableOpacity>
-
-                            <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+                            
+                            <TouchableOpacity onPress={(onFooterLinkPress)}>
                                 <Text style={styles.signInText}>
                                     Already have an account? <Text style={styles.signInLink}>Log In</Text>
                                 </Text>
                             </TouchableOpacity>
                         </SafeAreaView>
-                        <LoadingModal isVisible={isLoading} />
                     </ScrollView>
                 </LinearGradient>
             </KeyboardAvoidingView>
@@ -271,7 +292,7 @@ export default function LoginScreen({ navigation }) {
             <LinearGradient
                 style={styles.background}
                 colors={["#FFFFFF", "#E0F3FF"]}
-                locations={[0, 1]}>
+                locations={[0.7, 1]}>
 
                 <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                     <SafeAreaView style={styles.container2}>
@@ -297,11 +318,11 @@ export default function LoginScreen({ navigation }) {
                                 placeholder="e.g: (+63) 123-456-7890"
                                 value={phoneNumber}
                                 onChangeText={number => setPhoneNumber(number)}
-                                keyboardType="number-pad"/>
+                                keyboardType="number-pad" />
 
                             <TouchableOpacity onPress={() => {
                             }} style={styles.iconContainer}>
-                                <Icon name="cancel" size={19} color="#000"/>
+                                <Icon name="cancel" size={19} color="#000" />
                             </TouchableOpacity>
 
                         </View>
@@ -313,11 +334,11 @@ export default function LoginScreen({ navigation }) {
                                 placeholder="e.g: 938 Aurora Boulevard, Cubao, Quezon City"
                                 value={address}
                                 onChangeText={text => setAddress(text)}
-                                keyboardType="default"/>
+                                keyboardType="default" />
 
                             <TouchableOpacity onPress={() => {
                             }} style={styles.iconContainer}>
-                                <Icon name="cancel" size={19} color="#000"/>
+                                <Icon name="cancel" size={19} color="#000" />
                             </TouchableOpacity>
 
                         </View>
@@ -329,11 +350,11 @@ export default function LoginScreen({ navigation }) {
                                 placeholder="e.g: 1010"
                                 value={postalCode}
                                 onChangeText={text => setPostalCode(text)}
-                                keyboardType="number-pad"/>
+                                keyboardType="number-pad" />
 
                             <TouchableOpacity onPress={() => {
                             }} style={styles.iconContainer}>
-                                <Icon name="cancel" size={19} color="#000"/>
+                                <Icon name="cancel" size={19} color="#000" />
                             </TouchableOpacity>
 
                         </View>
@@ -345,11 +366,11 @@ export default function LoginScreen({ navigation }) {
                                 placeholder="(mm/dd/yyyy)"
                                 value={birthDate}
                                 onChangeText={text => setBirthDate(text)}
-                                keyboardType="number-pad"/>
+                                keyboardType="number-pad" />
 
                             <TouchableOpacity onPress={() => {
                             }} style={styles.iconContainer}>
-                                <Icon name="event" size={19} color="#5F5F5F"/>
+                                <Icon name="event" size={19} color="#5F5F5F" />
                             </TouchableOpacity>
 
                         </View>
@@ -363,8 +384,8 @@ export default function LoginScreen({ navigation }) {
                         <TouchableOpacity onPress={(continueSector)}>
                             <LinearGradient
                                 colors={['#000000', '#1a2a6c']} // Gradient colors (dark to blue)
-                                start={{x: 0, y: 0}} // Start gradient from the left
-                                end={{x: 1, y: 0}}   // End gradient at the right
+                                start={{ x: 0, y: 0 }} // Start gradient from the left
+                                end={{ x: 1, y: 0 }}   // End gradient at the right
                                 style={styles.signupConButton}>
 
                                 <Text style={styles.signupConButtonText}>CONTINUE</Text >
@@ -381,7 +402,7 @@ export default function LoginScreen({ navigation }) {
             <LinearGradient
                 style={styles.background}
                 colors={["#FFFFFF", "#E0F3FF"]}
-                locations={[0, 1]}>
+                locations={[0.7, 1]}>
 
                 <SafeAreaView style={styles.container2}>
 
@@ -423,7 +444,7 @@ export default function LoginScreen({ navigation }) {
 
                         <TouchableOpacity onPress={() => {
                         }} style={styles.iconContainer}>
-                            <Icon name="keyboard-arrow-down" size={19} color="#5F5F5F"/>
+                            <Icon name="keyboard-arrow-down" size={19} color="#5F5F5F" />
                         </TouchableOpacity>
 
                     </View>
@@ -451,11 +472,11 @@ export default function LoginScreen({ navigation }) {
                         <Text style={styles.signupPrevButtonText}>PREVIOUS</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={( continueProfile )}>
+                    <TouchableOpacity onPress={(continueProfile)}>
                         <LinearGradient
                             colors={['#000000', '#1a2a6c']} // Gradient colors (dark to blue)
-                            start={{x: 0, y: 0}} // Start gradient from the left
-                            end={{x: 1, y: 0}}   // End gradient at the right
+                            start={{ x: 0, y: 0 }} // Start gradient from the left
+                            end={{ x: 1, y: 0 }}   // End gradient at the right
                             style={styles.signupConButton}>
 
                             <Text style={styles.signupConButtonText}>CONTINUE</Text>
@@ -475,7 +496,7 @@ export default function LoginScreen({ navigation }) {
                 <LinearGradient
                     style={styles.background}
                     colors={["#FFFFFF", "#E0F3FF"]}
-                    locations={[0, 1]}>
+                    locations={[0.7, 1]}>
 
                     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                         <SafeAreaView style={styles.container2}>
@@ -494,7 +515,7 @@ export default function LoginScreen({ navigation }) {
                                 contentFit="contain"
                             />
 
-                            <TouchableOpacity onPress={() => {}}>
+                            <TouchableOpacity onPress={() => { }}>
                                 <View style={styles.containerProfie}>
                                     {/* Profile Picture */}
                                     <Image
@@ -518,11 +539,11 @@ export default function LoginScreen({ navigation }) {
                                     placeholder="e.g Isaac Rei"
                                     value={fullName}
                                     onChangeText={text => setFullName(text)}
-                                    keyboardType="default"/>
+                                    keyboardType="default" />
 
                                 <TouchableOpacity onPress={() => {
                                 }} style={styles.iconContainer}>
-                                    <Icon name="cancel" size={19} color="#000"/>
+                                    <Icon name="cancel" size={19} color="#000" />
                                 </TouchableOpacity>
 
                             </View>
@@ -534,11 +555,11 @@ export default function LoginScreen({ navigation }) {
                                     placeholder="Email"
                                     value={email}
                                     onChangeText={text => setEmail(text)}
-                                    keyboardType="email-address"/>
+                                    keyboardType="email-address" />
 
                                 <TouchableOpacity onPress={() => {
                                 }} style={styles.iconContainer}>
-                                    <Icon name="cancel" size={19} color="#000"/>
+                                    <Icon name="cancel" size={19} color="#000" />
                                 </TouchableOpacity>
 
                             </View>
@@ -550,11 +571,11 @@ export default function LoginScreen({ navigation }) {
                                     placeholder="(mm/dd/yyyy)"
                                     value={birthDate}
                                     onChangeText={text => setBirthDate(text)}
-                                    keyboardType="number-pad"/>
+                                    keyboardType="number-pad" />
 
                                 <TouchableOpacity onPress={() => {
                                 }} style={styles.iconContainer}>
-                                    <Icon name="event" size={19} color="#5F5F5F"/>
+                                    <Icon name="event" size={19} color="#5F5F5F" />
                                 </TouchableOpacity>
 
                             </View>
@@ -566,11 +587,11 @@ export default function LoginScreen({ navigation }) {
                                     placeholder="e.g: Youth"
                                     value={selectedSectorValue}
                                     onChangeText={text => setSectorSelectedValue(text)}
-                                    keyboardType="default"/>
+                                    keyboardType="default" />
 
                                 <TouchableOpacity onPress={() => {
                                 }} style={styles.iconContainer}>
-                                    <Icon name="cancel" size={19} color="#000"/>
+                                    <Icon name="cancel" size={19} color="#000" />
                                 </TouchableOpacity>
 
                             </View>
@@ -582,14 +603,58 @@ export default function LoginScreen({ navigation }) {
                                 <Text style={styles.signupPrevButtonText}>PREVIOUS</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity onPress={(continueSector)}>
+                            <TouchableOpacity onPress={(continueCreated)}>
                                 <LinearGradient
                                     colors={['#000000', '#1a2a6c']} // Gradient colors (dark to blue)
-                                    start={{x: 0, y: 0}} // Start gradient from the left
-                                    end={{x: 1, y: 0}}   // End gradient at the right
+                                    start={{ x: 0, y: 0 }} // Start gradient from the left
+                                    end={{ x: 1, y: 0 }}   // End gradient at the right
                                     style={styles.signupConButton}>
 
                                     <Text style={styles.signupConButtonText}>CONTINUE</Text >
+
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </SafeAreaView>
+                        <LoadingModal isVisible={isLoading} />
+                    </ScrollView>
+                </LinearGradient>
+            </KeyboardAvoidingView>
+        );
+    } else if (showSignupScreenPage5) {
+        return (
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : "height"} // Adjust padding for iOS, height for Android
+                keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -200} // Optional offset
+            >
+                <LinearGradient
+                    style={styles.background}
+                    colors={["#FFFFFF", "#E0F3FF"]}
+                    locations={[0.7, 1]}>
+
+                    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                        <SafeAreaView style={styles.container2}>
+
+                            <Image
+                                source={require('../../../assets/images/icon.png')}
+                                style={styles.image}
+                            />
+
+                            <Text style={styles.title}>Account Created</Text>
+                            <Text style={styles.subtitleUnderProg}>Your account has been successfully created! Find your future here at InclusiJob!</Text>
+
+                            <Image
+                                source={require('../../../assets/images/mail-man.png')}
+                                style={styles.imageCenter} />
+
+                            <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+                                <LinearGradient
+                                    colors={['#000000', '#1a2a6c']} // Gradient colors (dark to blue)
+                                    start={{ x: 0, y: 0 }} // Start gradient from the left
+                                    end={{ x: 1, y: 0 }}   // End gradient at the right
+                                    style={styles.signupConButton}>
+
+                                    <Text style={styles.signupConButtonText}>LOGIN</Text >
 
                                 </LinearGradient>
                             </TouchableOpacity>
